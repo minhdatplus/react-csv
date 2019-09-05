@@ -31,21 +31,15 @@ export const jsons2arrays = (jsons, headers) => {
   return [headerLabels, ...data];
 };
 
-export const getHeaderValue = (property, obj) => {
-  const foundValue = property
-    .replace(/\[([^\]]+)]/g, ".$1")
-    .split(".")
-    .reduce(function(o, p, i, arr) {
-      // if at any point the nested keys passed do not exist, splice the array so it doesnt keep reducing
-      if (o[p] === undefined) {
-        arr.splice(1);
-      } else {
-        return o[p];
-      }
-    }, obj);
-  
-  return (foundValue === undefined) ? '' : foundValue;
-}
+const getHeaderValue = (path, obj) => {
+  if (typeof(path) === "string") path = path.split(".");
+  if (!obj || !obj.hasOwnProperty(path[0])) return undefined;
+  const {[path[0]]: res} = obj;
+  if (path.length === 1) {
+      return res;
+  }
+  return getHeaderValue(path.slice(1), res);
+};
 
 export const elementOrEmpty = (element) => element || element === 0 ? element : '';
 
