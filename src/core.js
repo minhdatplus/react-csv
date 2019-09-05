@@ -4,85 +4,85 @@
 export const isSafari = () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export const isJsons = ((array) => Array.isArray(array) && array.every(
- row => (typeof row === 'object' && !(row instanceof Array))
+    row => (typeof row === 'object' && !(row instanceof Array))
 ));
 
 export const isArrays = ((array) => Array.isArray(array) && array.every(
- row => Array.isArray(row)
+    row => Array.isArray(row)
 ));
 
 export const jsonsHeaders = ((array) => Array.from(
- array.map(json => Object.keys(json))
- .reduce((a, b) => new Set([...a, ...b]), [])
+    array.map(json => Object.keys(json))
+        .reduce((a, b) => new Set([...a, ...b]), [])
 ));
 
 export const jsons2arrays = (jsons, headers) => {
-  headers = headers || jsonsHeaders(jsons);
+    headers = headers || jsonsHeaders(jsons);
 
-  // allow headers to have custom labels, defaulting to having the header data key be the label
-  let headerLabels = headers;
-  let headerKeys = headers;
-  if (isJsons(headers)) {
-    headerLabels = headers.map((header) => header.label);
-    headerKeys = headers.map((header) => header.key);
-  }
+    // allow headers to have custom labels, defaulting to having the header data key be the label
+    let headerLabels = headers;
+    let headerKeys = headers;
+    if (isJsons(headers)) {
+        headerLabels = headers.map((header) => header.label);
+        headerKeys = headers.map((header) => header.key);
+    }
 
-  const data = jsons.map((object) => headerKeys.map((header) => getHeaderValue(header, object)));
-  return [headerLabels, ...data];
+    const data = jsons.map((object) => headerKeys.map((header) => getHeaderValue(header, object)));
+    return [headerLabels, ...data];
 };
 
 const getHeaderValue = (path, obj) => {
-  if (typeof(path) === "string") path = path.split(".");
-  if (!obj || !obj.hasOwnProperty(path[0])) return undefined;
-  const {[path[0]]: res} = obj;
-  if (path.length === 1) {
-      return res;
-  }
-  return getHeaderValue(path.slice(1), res);
+    if (typeof (path) === "string") path = path.split(".");
+    if (!obj || !obj.hasOwnProperty(path[0])) return undefined;
+    const { [path[0]]: res } = obj;
+    if (path.length === 1) {
+        return res;
+    }
+    return getHeaderValue(path.slice(1), res);
 };
 
 export const elementOrEmpty = (element) => element || element === 0 ? element : '';
 
 export const joiner = ((data, separator = ',', enclosingCharacter = '"') => {
-  return data
-    .filter(e => e)
-    .map(
-      row => row
-        .map((element) => elementOrEmpty(element))
-        .map(column => `${enclosingCharacter}${column}${enclosingCharacter}`)
-        .join(separator)
-    )
-    .join(`\n`);
+    return data
+        .filter(e => e)
+        .map(
+            row => row
+                .map((element) => elementOrEmpty(element))
+                .map(column => `${enclosingCharacter}${column}${enclosingCharacter}`)
+                .join(separator)
+        )
+        .join(`\n`);
 });
 
 export const arrays2csv = ((data, headers, separator, enclosingCharacter) =>
- joiner(headers ? [headers, ...data] : data, separator, enclosingCharacter)
+    joiner(headers ? [headers, ...data] : data, separator, enclosingCharacter)
 );
 
 export const jsons2csv = ((data, headers, separator, enclosingCharacter) =>
- joiner(jsons2arrays(data, headers), separator, enclosingCharacter)
+    joiner(jsons2arrays(data, headers), separator, enclosingCharacter)
 );
 
 export const string2csv = ((data, headers, separator, enclosingCharacter) =>
-  (headers) ? `${headers.join(separator)}\n${data}`: data
+    (headers) ? `${headers.join(separator)}\n${data}` : data
 );
 
 export const toCSV = (data, headers, separator, enclosingCharacter) => {
- if (isJsons(data)) return jsons2csv(data, headers, separator, enclosingCharacter);
- if (isArrays(data)) return arrays2csv(data, headers, separator, enclosingCharacter);
- if (typeof data ==='string') return string2csv(data, headers, separator);
- throw new TypeError(`Data should be a "String", "Array of arrays" OR "Array of objects" `);
+    if (isJsons(data)) return jsons2csv(data, headers, separator, enclosingCharacter);
+    if (isArrays(data)) return arrays2csv(data, headers, separator, enclosingCharacter);
+    if (typeof data === 'string') return string2csv(data, headers, separator);
+    throw new TypeError(`Data should be a "String", "Array of arrays" OR "Array of objects" `);
 };
 
 export const buildURI = ((data, uFEFF, headers, separator, enclosingCharacter) => {
-  const csv = toCSV(data, headers, separator, enclosingCharacter);
-  const type = isSafari() ? 'application/csv' : 'text/csv';
-  const blob = new Blob([uFEFF ? '\uFEFF' : '', csv], {type});
-  const dataURI = `data:${type};charset=utf-8,${uFEFF ? '\uFEFF' : ''}${csv}`;
+    const csv = toCSV(data, headers, separator, enclosingCharacter);
+    const type = isSafari() ? 'application/csv' : 'text/csv';
+    const blob = new Blob([uFEFF ? '\uFEFF' : '', csv], { type });
+    const dataURI = `data:${type};charset=utf-8,${uFEFF ? '\uFEFF' : ''}${csv}`;
 
-  const URL = window.URL || window.webkitURL;
+    const URL = window.URL || window.webkitURL;
 
-  return (typeof URL.createObjectURL === 'undefined')
-    ? dataURI
-    : URL.createObjectURL(blob);
+    return (typeof URL.createObjectURL === 'undefined')
+        ? dataURI
+        : URL.createObjectURL(blob);
 });
